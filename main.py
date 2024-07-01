@@ -1,3 +1,4 @@
+import os
 from chess_pieces_moves import *
 from copy import deepcopy
 import pygame
@@ -43,6 +44,10 @@ pygame.init()
 screen = pygame.display.set_mode((900, 900))
 pygame.display.set_caption("Chess")
 
+images = {name: pygame.image.load(f"textures/{name}") for name in os.listdir('textures')}
+
+square_size = 100
+
 running = True
 while running:
     for event in pygame.event.get():
@@ -53,7 +58,9 @@ while running:
 
     black_square_color = (50, 50, 50)
     white_square_color = (200, 200, 200)
+    move_hint_color = (100, 255, 100)
 
+    # display board
     for x in range(8):
         for y in range(8):
             if (x + y) % 2:
@@ -61,8 +68,18 @@ while running:
             else:
                 color = white_square_color
 
-            pygame.draw.rect(screen, color, (50 + x * 100, 50 + y * 100, 100, 100))
+            pygame.draw.rect(screen, color, (50 + x * square_size, 50 + y * square_size, square_size, square_size))
 
+    # display pieces
+    for x in range(8):
+        for y in range(8):
+            if board[x][y]:
+                screen.blit(images[f'{board[x][y]}.png'], (50 + y * square_size, 50 + x * square_size))
+
+    # display move hints
+    for x, y in moves:
+        pygame.draw.circle(screen, move_hint_color,
+                           (50 + y * square_size + square_size // 2, 50 + x * square_size + square_size // 2), 10)
 
 
     pygame.display.flip()
