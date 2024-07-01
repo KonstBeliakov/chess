@@ -1,56 +1,6 @@
+from chess_pieces_moves import *
 from copy import deepcopy
-
-
-def rook_moves(board, x, y):
-    color = board[x][y][0]
-
-    moves = []
-
-    # vertical moves
-    for i in range(x + 1, 8):
-        if board[i][y]:
-            if board[i][y][0] != color:
-                moves.append([i, y])
-            break
-        moves.append([i, y])
-
-    for i in range(x - 1, -1, -1):
-        if board[i][y]:
-            if board[i][y][0] != color:
-                moves.append([i, y])
-            break
-        moves.append([i, y])
-
-    # horizontal moves
-    for i in range(y + 1, 8):
-        if board[x][i]:
-            if board[x][i][0] != color:
-                moves.append([x, i])
-            break
-        moves.append([x, i])
-
-    for i in range(y - 1, -1, -1):
-        if board[x][i]:
-            if board[x][i][0] != color:
-                moves.append([x, i])
-            break
-        moves.append([x, i])
-
-    return moves
-
-
-def knight_moves(board, x, y):
-    color = board[x][y][0]
-
-    l = [[x + 1, y + 2], [x - 1, y + 2], [x + 2, y + 1], [x - 2, y + 1],
-         [x + 2, y - 1], [x - 2, y - 1], [x + 1, y - 2], [x - 1, y - 2]]
-
-    moves = []
-
-    for x_new, y_new in l:
-        if (0 <= x_new < 8 and 0 <= y_new < 8) and ((not board[x_new][y_new]) or board[x_new][y_new][0] != color):
-            moves.append([x_new, y_new])
-    return moves
+import pygame
 
 
 def show_board(board, moves=None):
@@ -84,6 +34,37 @@ board = [
     ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
 ]
 
-l = knight_moves(board, 4, 4)
-print(*[pos_to_notation(*i) for i in l])
-show_board(board, l)
+moves = knight_moves(board, 4, 4)
+print(*[pos_to_notation(*i) for i in moves])
+show_board(board, moves)
+
+pygame.init()
+
+screen = pygame.display.set_mode((900, 900))
+pygame.display.set_caption("Chess")
+
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    screen.fill((0, 0, 0))
+
+    black_square_color = (50, 50, 50)
+    white_square_color = (200, 200, 200)
+
+    for x in range(8):
+        for y in range(8):
+            if (x + y) % 2:
+                color = black_square_color
+            else:
+                color = white_square_color
+
+            pygame.draw.rect(screen, color, (50 + x * 100, 50 + y * 100, 100, 100))
+
+
+
+    pygame.display.flip()
+
+pygame.quit()
