@@ -1,0 +1,89 @@
+from copy import deepcopy
+
+
+def rook_moves(board, x, y):
+    color = board[x][y][0]
+
+    moves = []
+
+    # vertical moves
+    for i in range(x + 1, 8):
+        if board[i][y]:
+            if board[i][y][0] != color:
+                moves.append([i, y])
+            break
+        moves.append([i, y])
+
+    for i in range(x - 1, -1, -1):
+        if board[i][y]:
+            if board[i][y][0] != color:
+                moves.append([i, y])
+            break
+        moves.append([i, y])
+
+    # horizontal moves
+    for i in range(y + 1, 8):
+        if board[x][i]:
+            if board[x][i][0] != color:
+                moves.append([x, i])
+            break
+        moves.append([x, i])
+
+    for i in range(y - 1, -1, -1):
+        if board[x][i]:
+            if board[x][i][0] != color:
+                moves.append([x, i])
+            break
+        moves.append([x, i])
+
+    return moves
+
+
+def knight_moves(board, x, y):
+    color = board[x][y][0]
+
+    l = [[x + 1, y + 2], [x - 1, y + 2], [x + 2, y + 1], [x - 2, y + 1],
+         [x + 2, y - 1], [x - 2, y - 1], [x + 1, y - 2], [x - 1, y - 2]]
+
+    moves = []
+
+    for x_new, y_new in l:
+        if (0 <= x_new < 8 and 0 <= y_new < 8) and ((not board[x_new][y_new]) or board[x_new][y_new][0] != color):
+            moves.append([x_new, y_new])
+    return moves
+
+
+def show_board(board, moves=None):
+    board1 = deepcopy(board)
+
+    if moves is not None:
+        for x, y in moves:
+            board1[x][y] = 'x'
+
+    print(*range(9), sep='  ')
+
+    for x, line in enumerate(board1):
+        print('abcdefgh'[x], end=' ')
+        for i in line:
+            print(i.rjust(2), end=' ')
+        print()
+
+
+def pos_to_notation(x, y):
+    return f'{"abcdefgh"[x]}{y + 1}'
+
+
+board = [
+    ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
+    ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
+    ['', '', '', '', '', '', '', ''],
+    ['', '', '', '', 'wB', '', '', ''],
+    ['', '', '', '', 'bN', '', '', ''],
+    ['', '', '', '', '', '', '', ''],
+    ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
+    ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
+]
+
+l = knight_moves(board, 4, 4)
+print(*[pos_to_notation(*i) for i in l])
+show_board(board, l)
