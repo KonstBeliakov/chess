@@ -64,7 +64,7 @@ def king_moves(board, x, y):
 
 def bishop_moves(board, x, y):
     moves = []
-    color = board[x][y][0]
+    color = 'w' #board[x][y][0]
 
     for i in range(1, 8 - x):
         if y + i >= 8:
@@ -84,7 +84,7 @@ def bishop_moves(board, x, y):
             break
         moves.append([x + i, y - i])
 
-    for i in range(-1, -x, -1):
+    for i in range(-1, -x - 1, -1):
         if y - i < 0 or y - i >= 8:
             break
         if board[x + i][y - i]:
@@ -93,7 +93,7 @@ def bishop_moves(board, x, y):
             break
         moves.append([x + i, y - i])
 
-    for i in range(-1, -x, -1):
+    for i in range(-1, -x - 1, -1):
         if y + i < 0 or y + i >= 8:
             break
         if board[x + i][y + i]:

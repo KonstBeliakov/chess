@@ -29,19 +29,53 @@ def pos_to_notation(x, y):
 
 def evaluation(board):
     s = 0
+
+    knight_value = [[2.5, 2.7, 2.8, 2.8, 2.8, 2.8, 2.7, 2.5],
+                    [2.7, 2.8, 2.9, 2.9, 2.9, 2.9, 2.8, 2.7],
+                    [2.8, 2.9, 3.0, 3.0, 3.0, 3.0, 2.9, 2.8],
+                    [2.8, 2.9, 3.0, 3.0, 3.0, 3.0, 2.9, 2.8],
+                    [2.8, 2.9, 3.0, 3.0, 3.0, 3.0, 2.9, 2.8],
+                    [2.8, 2.9, 3.0, 3.0, 3.0, 3.0, 2.9, 2.8],
+                    [2.7, 2.8, 2.9, 2.9, 2.9, 2.9, 2.8, 2.7],
+                    [2.5, 2.7, 2.8, 2.8, 2.8, 2.8, 2.7, 2.5]]
+
+    bishop_value = [[2.7, 2.85, 2.85, 2.85, 2.85, 2.85, 2.85, 2.7],
+                    [2.85, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 2.85],
+                    [2.85, 3.0, 3.05, 3.05, 3.05, 3.05, 3.0, 2.85],
+                    [2.85, 3.0, 3.05, 3.1, 3.1, 3.05, 3.0, 2.85],
+                    [2.85, 3.0, 3.05, 3.1, 3.1, 3.05, 3.0, 2.85],
+                    [2.85, 3.0, 3.05, 3.05, 3.05, 3.05, 3.0, 2.85],
+                    [2.85, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 2.85],
+                    [2.7, 2.85, 2.85, 2.85, 2.85, 2.85, 2.85, 2.7]]
+
     piece_values = {'bP': -1, 'bB': -3, 'bN': -3, 'bR': -5, 'bQ': -9, 'bK': -200,
                     'wP': 1, 'wB': 3, 'wN': 3, 'wR': 5, 'wQ': 9, 'wK': 200,
                     '': 0}
     for x in range(8):
         for y in range(8):
-            s += piece_values[board[y][x]]
+            if board[y][x].endswith('N'):
+                s += knight_value[y][x] * (1 if board[y][x][0] == 'w' else -1)
+            elif board[y][x].endswith('B'):
+                s += bishop_value[y][x] * (1 if board[y][x][0] == 'w' else -1)
+            else:
+                s += piece_values[board[y][x]]
 
     return s
 
 
 def make_move(board):  # makes random move for black
     m = all_moves(board, False)
-    move = choice(m)
+
+    m2 = []
+
+    for move in m:
+        board1 = deepcopy(board)
+        board1[move[2]][move[3]] = board1[move[0]][move[1]]
+        board1[move[0]][move[1]] = ''
+
+        m2.append([-evaluation(board1), move])
+
+    move = max(m2)[1]
 
     board[move[2]][move[3]] = board[move[0]][move[1]]
     board[move[0]][move[1]] = ''
@@ -88,7 +122,7 @@ while running:
                 if move_hints and (new[1], new[0]) in move_hints:
                     board[new[1]][new[0]] = board[selected[1]][selected[0]]
                     board[selected[1]][selected[0]] = ''
-                    #white_turn = not white_turn
+                    # white_turn = not white_turn
                     make_move(board)
                     selected = None
                 else:
@@ -143,7 +177,7 @@ while running:
                                 indentY + x * square_size + square_size // 2), 10)
 
     e = evaluation(board)
-    text = font.render(f"Evaluation:{'+' if e > 0 else ''}{e}", True, text_color)
+    text = font.render(f"Evaluation:{'+' if e > 0 else ''}{round(e, 3)}", True, text_color)
 
     text_rect = text.get_rect()
     text_rect.center = (800, 100)
