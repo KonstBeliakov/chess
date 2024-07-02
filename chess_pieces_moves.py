@@ -48,3 +48,105 @@ def knight_moves(board, x, y):
         if (0 <= x_new < 8 and 0 <= y_new < 8) and ((not board[x_new][y_new]) or board[x_new][y_new][0] != color):
             moves.append([x_new, y_new])
     return moves
+
+
+def king_moves(board, x, y):
+    color = board[x][y][0]
+
+    moves = []
+
+    for i in range(x - 1, x + 2):
+        for j in range(y - 1, y + 2):
+            if (0 <= i < 8 and 0 <= j < 8) and (not board[i][j] or board[i][j][0] != color):
+                moves.append([i, j])
+    return moves
+
+
+def bishop_moves(board, x, y):
+    moves = []
+    color = board[x][y][0]
+
+    for i in range(1, 9 - x):
+        if y + i >= 8:
+            break
+        if board[x + i][y + i]:
+            if board[x + i][y + i][0] != color:
+                moves.append([x + i, y + i])
+            break
+        moves.append([x + i, y + i])
+
+    for i in range(1, 9 - x):
+        if y - i < 0:
+            break
+        if board[x + i][y - i]:
+            if board[x + i][y - i][0] != color:
+                moves.append([x + i, y - i])
+            break
+        moves.append([x + i, y - i])
+
+
+    for i in range(-1, -x, -1):
+        if y - i < 0 or y - i >= 8:
+            break
+        if board[x + i][y - i]:
+            if board[x + i][y - i][0] != color:
+                moves.append([x + i, y - i])
+            break
+        moves.append([x + i, y - i])
+
+    for i in range(-1, -x, -1):
+        if y + i < 0 or y + i >= 8:
+            break
+        if board[x + i][y + i]:
+            if board[x + i][y + i][0] != color:
+                moves.append([x + i, y + i])
+            break
+        moves.append([x + i, y + i])
+
+    return moves
+
+
+def queen_moves(board, x, y):
+    return bishop_moves(board, x, y) + rook_moves(board, x, y)
+
+
+def pawn_moves(board, x, y):
+    color = board[x][y][0]
+    moves = []
+
+    if color == 'b' and (x + 1) < 8:
+        if not board[x + 1][y]:
+            moves.append([x + 1, y])
+        if (y + 1) < 8 and board[x + 1][y + 1] and board[x + 1][y + 1][0] != color:
+            moves.append([x + 1, y + 1])
+        if (y - 1) >= 0 and board[x + 1][y - 1] and board[x + 1][y - 1][0] != color:
+            moves.append([x + 1, y - 1])
+        if x == 1 and not board[x + 1][y] and not board[x + 2][y]:
+            moves.append([x + 2, y])
+    elif (x - 1) >= 0:
+        if not board[x - 1][y]:
+            moves.append([x - 1, y])
+        if (y + 1) < 8 and board[x - 1][y + 1] and board[x - 1][y + 1][0] != color:
+            moves.append([x - 1, y + 1])
+        if (y - 1) >= 0 and board[x - 1][y - 1] and board[x - 1][y - 1][0] != color:
+            moves.append([x - 1, y - 1])
+        if x == 6 and not board[x - 1][y] and not board[x - 2][y]:
+            moves.append([x - 2, y])
+    return moves
+
+
+def moves(board, x, y):
+    match board[x][y][1]:
+        case 'P':
+            return pawn_moves(board, x, y)
+        case 'B':
+            return bishop_moves(board, x, y)
+        case 'N':
+            return knight_moves(board, x, y)
+        case 'R':
+            return rook_moves(board, x, y)
+        case 'Q':
+            return queen_moves(board, x, y)
+        case 'K':
+            return king_moves(board, x, y)
+    return []

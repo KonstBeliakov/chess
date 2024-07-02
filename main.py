@@ -28,14 +28,14 @@ board = [
     ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
     ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
     ['', '', '', '', '', '', '', ''],
-    ['', '', '', '', 'wB', '', '', ''],
-    ['', '', '', '', 'bN', '', '', ''],
+    ['', '', '', '', '', 'bK', '', ''],
+    ['', 'wB', '', '', '', '', '', ''],
     ['', '', '', '', '', '', '', ''],
     ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
     ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
 ]
 
-moves = knight_moves(board, 4, 4)
+moves = moves(board, 3, 5)
 print(*[pos_to_notation(*i) for i in moves])
 show_board(board, moves)
 
