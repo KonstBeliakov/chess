@@ -7,4 +7,4 @@ black_square_color = (50, 50, 50)
 white_square_color = (200, 200, 200)
 move_hint_color = (100, 255, 100)
 
-show_move_hints = False
+show_move_hints = True

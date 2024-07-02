@@ -66,7 +66,7 @@ def bishop_moves(board, x, y):
     moves = []
     color = board[x][y][0]
 
-    for i in range(1, 9 - x):
+    for i in range(1, 8 - x):
         if y + i >= 8:
             break
         if board[x + i][y + i]:
@@ -75,7 +75,7 @@ def bishop_moves(board, x, y):
             break
         moves.append([x + i, y + i])
 
-    for i in range(1, 9 - x):
+    for i in range(1, 8 - x):
         if y - i < 0:
             break
         if board[x + i][y - i]:
@@ -136,17 +136,18 @@ def pawn_moves(board, x, y):
 
 
 def moves(board, x, y):
-    match board[x][y][1]:
-        case 'P':
-            return pawn_moves(board, x, y)
-        case 'B':
-            return bishop_moves(board, x, y)
-        case 'N':
-            return knight_moves(board, x, y)
-        case 'R':
-            return rook_moves(board, x, y)
-        case 'Q':
-            return queen_moves(board, x, y)
-        case 'K':
-            return king_moves(board, x, y)
+    if board[x][y]:
+        match board[x][y][1]:
+            case 'P':
+                return pawn_moves(board, x, y)
+            case 'B':
+                return bishop_moves(board, x, y)
+            case 'N':
+                return knight_moves(board, x, y)
+            case 'R':
+                return rook_moves(board, x, y)
+            case 'Q':
+                return queen_moves(board, x, y)
+            case 'K':
+                return king_moves(board, x, y)
     return []

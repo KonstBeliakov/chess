@@ -36,10 +36,6 @@ board = [
     ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
 ]
 
-moves = moves(board, 3, 5)
-print(*[pos_to_notation(*i) for i in moves])
-show_board(board, moves)
-
 pygame.init()
 
 screen = pygame.display.set_mode((900, 900))
@@ -47,11 +43,17 @@ pygame.display.set_caption("Chess")
 
 images = {name: pygame.image.load(f"textures/{name}") for name in os.listdir('textures')}
 
+selected_square = None
+move_hints = None
+
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mouseX, mouseY = event.pos
+            selected_square = ((mouseX - indentX) // square_size, (mouseY - indentY) // square_size)
 
     screen.fill(bg_color)
 
@@ -63,7 +65,21 @@ while running:
             else:
                 color = white_square_color
 
-            pygame.draw.rect(screen, color, (indentX + x * square_size, indentY + y * square_size, square_size, square_size))
+            pygame.draw.rect(screen, color,
+                             (indentX + x * square_size, indentY + y * square_size, square_size, square_size))
+
+    # display selected square
+    if selected_square is not None:
+        pygame.draw.rect(screen, move_hint_color, (indentX + square_size * selected_square[0],
+                                                   indentY + square_size * selected_square[1],
+                                                   square_size, square_size))
+        if sum(selected_square) % 2:
+            color = black_square_color
+        else:
+            color = white_square_color
+        pygame.draw.rect(screen, color, (indentX + square_size // 20 + square_size * selected_square[0],
+                                         indentY + square_size // 20 + square_size * selected_square[1],
+                                         square_size * 0.9, square_size * 0.9))
 
     # display pieces
     for x in range(8):
@@ -72,12 +88,14 @@ while running:
                 screen.blit(images[f'{board[x][y]}.png'], (indentX + y * square_size, indentY + x * square_size))
 
     # display move hints
-    if moves is not None and show_move_hints:
-        for x, y in moves:
+    if selected_square is not None:
+        move_hints = moves(board, selected_square[1], selected_square[0])
+
+    if (move_hints is not None) and show_move_hints:
+        for x, y in move_hints:
             pygame.draw.circle(screen, move_hint_color,
                                (indentX + y * square_size + square_size // 2,
                                 indentY + x * square_size + square_size // 2), 10)
-
 
     pygame.display.flip()
 
