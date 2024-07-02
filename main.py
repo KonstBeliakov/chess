@@ -1,35 +1,18 @@
 import os
-from random import choice
 
 from chess_pieces_moves import *
 from copy import deepcopy
 from settings import *
 import pygame
+from functools import lru_cache
 
 
-def show_board(board, moves=None):
-    board1 = deepcopy(board)
-
-    if moves is not None:
-        for x, y in moves:
-            board1[x][y] = 'x'
-
-    print(*range(9), sep='  ')
-
-    for x, line in enumerate(board1):
-        print('abcdefgh'[x], end=' ')
-        for i in line:
-            print(i.rjust(2), end=' ')
-        print()
+def to_notation(x, y):
+    return f'{"abcdefgh"[y]}{8 - x}'
 
 
-def pos_to_notation(x, y):
-    return f'{"abcdefgh"[x]}{y + 1}'
-
-
-def evaluation(board):
-    s = 0
-
+@lru_cache(None)
+def evaluation(board: tuple, r=0, white_turn=False):
     knight_value = [[2.5, 2.7, 2.8, 2.8, 2.8, 2.8, 2.7, 2.5],
                     [2.7, 2.8, 2.9, 2.9, 2.9, 2.9, 2.8, 2.7],
                     [2.8, 2.9, 3.0, 3.0, 3.0, 3.0, 2.9, 2.8],
@@ -48,19 +31,56 @@ def evaluation(board):
                     [2.85, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 2.85],
                     [2.7, 2.85, 2.85, 2.85, 2.85, 2.85, 2.85, 2.7]]
 
+    pawn_value = [[1, 1, 1, 1, 1, 1, 1, 1],
+                  [1, 1, 1, 1, 1, 1, 1, 1],
+                  [1, 1, 1, 1, 1, 1, 1, 1],
+                  [1, 1, 1, 1.35, 1.35, 1, 1, 1],
+                  [1, 1, 1, 1.35, 1.35, 1, 1, 1],
+                  [1, 1, 1, 1, 1, 1, 1, 1],
+                  [1, 1, 1, 1, 1, 1, 1, 1],
+                  [1, 1, 1, 1, 1, 1, 1, 1]]
+
     piece_values = {'bP': -1, 'bB': -3, 'bN': -3, 'bR': -5, 'bQ': -9, 'bK': -200,
                     'wP': 1, 'wB': 3, 'wN': 3, 'wR': 5, 'wQ': 9, 'wK': 200,
                     '': 0}
-    for x in range(8):
-        for y in range(8):
-            if board[y][x].endswith('N'):
-                s += knight_value[y][x] * (1 if board[y][x][0] == 'w' else -1)
-            elif board[y][x].endswith('B'):
-                s += bishop_value[y][x] * (1 if board[y][x][0] == 'w' else -1)
-            else:
-                s += piece_values[board[y][x]]
+    if r == 0:
+        s = 0
+        for x in range(8):
+            for y in range(8):
+                match board[x][y]:
+                    case 'wP':
+                        s += pawn_value[x][y]
+                    case 'bP':
+                        s -= pawn_value[x][y]
+                    case 'wN':
+                        s += knight_value[x][y]
+                    case 'bN':
+                        s -= knight_value[x][y]
+                    case 'wB':
+                        s += bishop_value[x][y]
+                    case 'bB':
+                        s -= bishop_value[x][y]
+                    case _:
+                        s += piece_values[board[x][y]]
+        return s
+    else:
+        m = all_moves(board, white_turn=white_turn)
 
-    return s
+        m2 = []
+
+        for move in m:
+            board1 = [[i for i in line] for line in board]
+            board1[move[2]][move[3]] = board1[move[0]][move[1]]
+            board1[move[0]][move[1]] = ''
+
+            board1 = tuple([tuple(line) for line in board1])
+
+            m2.append(evaluation(board1, r=r - 1, white_turn=not white_turn))
+
+        if not white_turn:
+            return min(m2)
+        else:
+            return max(m2)
 
 
 def make_move(board):  # makes random move for black
@@ -73,9 +93,16 @@ def make_move(board):  # makes random move for black
         board1[move[2]][move[3]] = board1[move[0]][move[1]]
         board1[move[0]][move[1]] = ''
 
-        m2.append([-evaluation(board1), move])
+        board1 = tuple([tuple(line) for line in board1])
 
-    move = max(m2)[1]
+        m2.append([evaluation(board1, r=recursion_depth, white_turn=True), move])
+
+    m2.sort()
+    for i in m2[:5]:
+        print(i[0], board[i[1][0]][i[1][1]], to_notation(*i[1][:2]), to_notation(*i[1][2:]))
+    print()
+
+    move = min(m2, key=lambda x: x[0])[1]
 
     board[move[2]][move[3]] = board[move[0]][move[1]]
     board[move[0]][move[1]] = ''
@@ -176,7 +203,18 @@ while running:
                                (indentX + y * square_size + square_size // 2,
                                 indentY + x * square_size + square_size // 2), 10)
 
-    e = evaluation(board)
+    # displaying digits 1-8
+    for i in range(8):
+        text = font.render(str(8 - i), True, text_color)
+        screen.blit(text, (indentX - 20, indentY + (i + 0.5) * square_size))
+
+    # displaying letters a-h
+    for i, letter in enumerate('abcdefgh'):
+        text = font.render(letter, True, text_color)
+        screen.blit(text, (indentX + i * square_size + square_size // 2, 10 + indentY + 8 * square_size))
+
+    board1 = tuple([tuple(line) for line in board])
+    e = evaluation(board1)
     text = font.render(f"Evaluation:{'+' if e > 0 else ''}{round(e, 3)}", True, text_color)
 
     text_rect = text.get_rect()

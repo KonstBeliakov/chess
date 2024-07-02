@@ -1,4 +1,6 @@
-screen_size = (1200, 800)
+recursion_depth = 3
+
+screen_size = (1200, 700)
 
 square_size = 70
 indentX = 50

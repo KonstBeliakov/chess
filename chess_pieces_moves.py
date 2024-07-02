@@ -64,7 +64,7 @@ def king_moves(board, x, y):
 
 def bishop_moves(board, x, y):
     moves = []
-    color = 'w' #board[x][y][0]
+    color = board[x][y][0]
 
     for i in range(1, 8 - x):
         if y + i >= 8:
