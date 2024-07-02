@@ -46,6 +46,8 @@ images = {name: pygame.image.load(f"textures/{name}") for name in os.listdir('te
 selected_square = None
 move_hints = None
 
+white_turn = True
+
 running = True
 while running:
     for event in pygame.event.get():
@@ -53,7 +55,22 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouseX, mouseY = event.pos
-            selected_square = ((mouseX - indentX) // square_size, (mouseY - indentY) // square_size)
+            new_square = ((mouseX - indentX) // square_size, (mouseY - indentY) // square_size)
+
+            if new_square[0] >= 8 or new_square[0] < 0 or new_square[1] >= 8 or new_square[1] < 0:
+                selected_square = None
+            elif selected_square is not None and new_square[0] == selected_square[0] and new_square[1] == selected_square[1]:
+                selected_square = None
+            elif selected_square and board[selected_square[1]][selected_square[0]]:
+                if move_hints and any([new_square[1] == move[0] and new_square[0] == move[1] for move in move_hints]):
+                    board[new_square[1]][new_square[0]] = board[selected_square[1]][selected_square[0]]
+                    board[selected_square[1]][selected_square[0]] = ''
+                    white_turn = not white_turn
+                    selected_square = None
+                else:
+                    selected_square = new_square
+            else:
+                selected_square = new_square
 
     screen.fill(bg_color)
 
@@ -88,8 +105,12 @@ while running:
                 screen.blit(images[f'{board[x][y]}.png'], (indentX + y * square_size, indentY + x * square_size))
 
     # display move hints
-    if selected_square is not None:
+    if selected_square is not None and \
+            ((white_turn and board[selected_square[1]][selected_square[0]].startswith('w')) or
+             (not white_turn and board[selected_square[1]][selected_square[0]].startswith('b'))):
         move_hints = moves(board, selected_square[1], selected_square[0])
+    else:
+        move_hints = None
 
     if (move_hints is not None) and show_move_hints:
         for x, y in move_hints:
