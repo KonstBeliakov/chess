@@ -84,7 +84,6 @@ def bishop_moves(board, x, y):
             break
         moves.append([x + i, y - i])
 
-
     for i in range(-1, -x, -1):
         if y - i < 0 or y - i >= 8:
             break
@@ -151,3 +150,14 @@ def moves(board, x, y):
             case 'K':
                 return king_moves(board, x, y)
     return []
+
+
+def all_moves(board, white_turn=True):
+    m = []
+
+    for x in range(8):
+        for y in range(8):
+            if (board[x][y].startswith('w') and white_turn) or \
+                    (board[x][y].startswith('b') and not white_turn):
+                m += [[x, y, move[0], move[1]] for move in moves(board, x, y)]
+    return m
