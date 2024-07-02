@@ -43,7 +43,7 @@ pygame.display.set_caption("Chess")
 
 images = {name: pygame.image.load(f"textures/{name}") for name in os.listdir('textures')}
 
-selected_square = None
+selected = None  # selected square of the board
 move_hints = None
 
 white_turn = True
@@ -55,22 +55,22 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouseX, mouseY = event.pos
-            new_square = ((mouseX - indentX) // square_size, (mouseY - indentY) // square_size)
+            new = ((mouseX - indentX) // square_size, (mouseY - indentY) // square_size)  # new square of the board
 
-            if new_square[0] >= 8 or new_square[0] < 0 or new_square[1] >= 8 or new_square[1] < 0:
-                selected_square = None
-            elif selected_square is not None and new_square[0] == selected_square[0] and new_square[1] == selected_square[1]:
-                selected_square = None
-            elif selected_square and board[selected_square[1]][selected_square[0]]:
-                if move_hints and any([new_square[1] == move[0] and new_square[0] == move[1] for move in move_hints]):
-                    board[new_square[1]][new_square[0]] = board[selected_square[1]][selected_square[0]]
-                    board[selected_square[1]][selected_square[0]] = ''
+            if selected and not (0 <= selected[0] < 8 and 0 <= selected[1] < 8):
+                selected = None
+            elif selected and new[0] == selected[0] and new[1] == selected[1]:
+                selected = None
+            elif selected and board[selected[1]][selected[0]]:
+                if move_hints and (new[1], new[0]) in move_hints:
+                    board[new[1]][new[0]] = board[selected[1]][selected[0]]
+                    board[selected[1]][selected[0]] = ''
                     white_turn = not white_turn
-                    selected_square = None
+                    selected = None
                 else:
-                    selected_square = new_square
+                    selected = new
             else:
-                selected_square = new_square
+                selected = new
 
     screen.fill(bg_color)
 
@@ -86,16 +86,16 @@ while running:
                              (indentX + x * square_size, indentY + y * square_size, square_size, square_size))
 
     # display selected square
-    if selected_square is not None:
-        pygame.draw.rect(screen, move_hint_color, (indentX + square_size * selected_square[0],
-                                                   indentY + square_size * selected_square[1],
+    if selected is not None:
+        pygame.draw.rect(screen, move_hint_color, (indentX + square_size * selected[0],
+                                                   indentY + square_size * selected[1],
                                                    square_size, square_size))
-        if sum(selected_square) % 2:
+        if sum(selected) % 2:
             color = black_square_color
         else:
             color = white_square_color
-        pygame.draw.rect(screen, color, (indentX + square_size // 20 + square_size * selected_square[0],
-                                         indentY + square_size // 20 + square_size * selected_square[1],
+        pygame.draw.rect(screen, color, (indentX + square_size // 20 + square_size * selected[0],
+                                         indentY + square_size // 20 + square_size * selected[1],
                                          square_size * 0.9, square_size * 0.9))
 
     # display pieces
@@ -105,14 +105,14 @@ while running:
                 screen.blit(images[f'{board[x][y]}.png'], (indentX + y * square_size, indentY + x * square_size))
 
     # display move hints
-    if selected_square is not None and \
-            ((white_turn and board[selected_square[1]][selected_square[0]].startswith('w')) or
-             (not white_turn and board[selected_square[1]][selected_square[0]].startswith('b'))):
-        move_hints = moves(board, selected_square[1], selected_square[0])
+    if selected and \
+            ((white_turn and board[selected[1]][selected[0]].startswith('w')) or
+             (not white_turn and board[selected[1]][selected[0]].startswith('b'))):
+        move_hints = [tuple(move) for move in moves(board, selected[1], selected[0])]
     else:
         move_hints = None
 
-    if (move_hints is not None) and show_move_hints:
+    if move_hints and show_move_hints:
         for x, y in move_hints:
             pygame.draw.circle(screen, move_hint_color,
                                (indentX + y * square_size + square_size // 2,
