@@ -152,7 +152,23 @@ def moves(board, x, y):
     return []
 
 
-def all_moves(board, white_turn=True):
+def is_in_check(board, white_turn=False):
+    king_pos = None
+    s = 'bK' if white_turn else 'wK'
+    print(f's: {s}')
+    for i in range(8):
+        if s in board[i]:
+            king_pos = [i, board[i].index(s)]
+            break
+    print(f'king_pos: {king_pos}')
+
+    for move in all_moves(board, white_turn=white_turn, consider_check=False):
+        if move[2] == king_pos[0] and move[3] == king_pos[1]:
+            return king_pos
+    return False
+
+
+def all_moves(board, white_turn=True, consider_check=False):
     m = []
 
     for x in range(8):

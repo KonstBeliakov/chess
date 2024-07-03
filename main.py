@@ -5,6 +5,7 @@ from time import perf_counter
 from board_evaluation import evaluation
 from chess_pieces_moves import *
 from settings import *
+from copy import deepcopy
 import pygame
 
 
@@ -20,10 +21,6 @@ def play_move_sound():
 def play_capture_sound():
     pygame.mixer.music.load('sounds/capture.mp3')
     pygame.mixer.music.play(0)
-
-
-def f(board, r, white_turn, move, i, evalueation_list):
-    evalueation_list[i] = (evaluation(board, r=r, white_turn=white_turn), move)
 
 
 def make_move():
@@ -73,7 +70,6 @@ current_evaluation = 0
 font = pygame.font.Font(None, 24)
 
 last_move = None
-
 
 while running:
     for event in pygame.event.get():
@@ -135,6 +131,20 @@ while running:
                                          indentY + square_size // 20 + square_size * selected[1],
                                          square_size * 0.9, square_size * 0.9))
 
+    # display check square
+    for t in False, True:
+        if king_pos := is_in_check(board, white_turn=t):
+            pygame.draw.rect(screen, check_hint_color,
+                             (indentX + square_size * king_pos[1], indentY + square_size * king_pos[0],
+                              square_size, square_size))
+            if sum(king_pos) % 2:
+                color = black_square_color
+            else:
+                color = white_square_color
+            pygame.draw.rect(screen, color, (indentX + square_size // 20 + square_size * king_pos[1],
+                                             indentY + square_size // 20 + square_size * king_pos[0],
+                                             square_size * 0.9, square_size * 0.9))
+
     # displaying last move
     if last_move is not None:
         for x, y in [last_move[:2], last_move[2:]]:
@@ -156,7 +166,14 @@ while running:
     if selected and can_move and \
             ((white_turn and board[selected[1]][selected[0]].startswith('w')) or
              (not white_turn and board[selected[1]][selected[0]].startswith('b'))):
-        move_hints = [tuple(move) for move in moves(board, selected[1], selected[0])]
+        move_hints = []
+        for move in moves(board, selected[1], selected[0]):
+            board1 = deepcopy(board)
+            board1[move[0]][move[1]] = board1[selected[1]][selected[0]]
+            board1[selected[1]][selected[0]] = ''
+
+            if can_sacrifice_king or not bool(is_in_check(board1, white_turn=not white_turn)):
+                move_hints.append(tuple(move))
     else:
         move_hints = None
 
@@ -177,7 +194,8 @@ while running:
         screen.blit(text, (indentX + i * square_size + square_size // 2, 10 + indentY + 8 * square_size))
 
     board1 = tuple([tuple(line) for line in board])
-    text = font.render(f"Evaluation:{'+' if current_evaluation > 0 else ''}{round(current_evaluation, 3)}", True, text_color)
+    text = font.render(f"Evaluation:{'+' if current_evaluation > 0 else ''}{round(current_evaluation, 3)}", True,
+                       text_color)
     screen.blit(text, (800, 100))
 
     text2 = font.render(f'time for move: {time_for_move}', True, text_color)
