@@ -58,13 +58,16 @@ def evaluation_no_recursion(board: tuple):
     return s
 
 
-def evaluation(board: tuple, r=0, white_turn=False):
+def evaluation(board: tuple, r=0, white_turn=False, current_max=-300, current_min=300):
     if r == 0:
         return evaluation_no_recursion(board)
     else:
         m = all_moves(board, white_turn=white_turn)
 
-        m2 = []
+        if not white_turn:
+            value = 300
+        else:
+            value = -300
 
         for move in m:
             board1 = [[i for i in line] for line in board]
@@ -73,9 +76,15 @@ def evaluation(board: tuple, r=0, white_turn=False):
 
             board1 = tuple([tuple(line) for line in board1])
 
-            m2.append(evaluation(board1, r=r - 1, white_turn=not white_turn))
+            if not white_turn:
+                t = evaluation(board1, r=r - 1, white_turn=not white_turn, current_min=value)
+                value = min(value, t)
+                if value < current_max:
+                    return value
+            else:
+                t = evaluation(board1, r=r - 1, white_turn=not white_turn, current_max=value)
+                value = max(value, t)
+                if value > current_min:
+                    return value
 
-        if not white_turn:
-            return min(m2)
-        else:
-            return max(m2)
+        return value

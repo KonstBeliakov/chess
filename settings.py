@@ -1,4 +1,4 @@
-recursion_depth = 3
+recursion_depth = 4
 
 screen_size = (1200, 700)
 
