@@ -1,101 +1,40 @@
 import os
+import threading
+from time import perf_counter
 
+from board_evaluation import evaluation
 from chess_pieces_moves import *
 from copy import deepcopy
 from settings import *
 import pygame
-from functools import lru_cache
 
 
 def to_notation(x, y):
     return f'{"abcdefgh"[y]}{8 - x}'
 
 
-@lru_cache(None)
-def evaluation(board: tuple, r=0, white_turn=False):
-    knight_value = [[2.5, 2.7, 2.8, 2.8, 2.8, 2.8, 2.7, 2.5],
-                    [2.7, 2.8, 2.9, 2.9, 2.9, 2.9, 2.8, 2.7],
-                    [2.8, 2.9, 3.0, 3.0, 3.0, 3.0, 2.9, 2.8],
-                    [2.8, 2.9, 3.0, 3.0, 3.0, 3.0, 2.9, 2.8],
-                    [2.8, 2.9, 3.0, 3.0, 3.0, 3.0, 2.9, 2.8],
-                    [2.8, 2.9, 3.0, 3.0, 3.0, 3.0, 2.9, 2.8],
-                    [2.7, 2.8, 2.9, 2.9, 2.9, 2.9, 2.8, 2.7],
-                    [2.5, 2.7, 2.8, 2.8, 2.8, 2.8, 2.7, 2.5]]
-
-    bishop_value = [[2.7, 2.85, 2.85, 2.85, 2.85, 2.85, 2.85, 2.7],
-                    [2.85, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 2.85],
-                    [2.85, 3.0, 3.05, 3.05, 3.05, 3.05, 3.0, 2.85],
-                    [2.85, 3.0, 3.05, 3.1, 3.1, 3.05, 3.0, 2.85],
-                    [2.85, 3.0, 3.05, 3.1, 3.1, 3.05, 3.0, 2.85],
-                    [2.85, 3.0, 3.05, 3.05, 3.05, 3.05, 3.0, 2.85],
-                    [2.85, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 2.85],
-                    [2.7, 2.85, 2.85, 2.85, 2.85, 2.85, 2.85, 2.7]]
-
-    pawn_value = [[1, 1, 1, 1, 1, 1, 1, 1],
-                  [1, 1, 1, 1, 1, 1, 1, 1],
-                  [1, 1, 1, 1, 1, 1, 1, 1],
-                  [1, 1, 1, 1.35, 1.35, 1, 1, 1],
-                  [1, 1, 1, 1.35, 1.35, 1, 1, 1],
-                  [1, 1, 1, 1, 1, 1, 1, 1],
-                  [1, 1, 1, 1, 1, 1, 1, 1],
-                  [1, 1, 1, 1, 1, 1, 1, 1]]
-
-    piece_values = {'bP': -1, 'bB': -3, 'bN': -3, 'bR': -5, 'bQ': -9, 'bK': -200,
-                    'wP': 1, 'wB': 3, 'wN': 3, 'wR': 5, 'wQ': 9, 'wK': 200,
-                    '': 0}
-    if r == 0:
-        s = 0
-        for x in range(8):
-            for y in range(8):
-                match board[x][y]:
-                    case 'wP':
-                        s += pawn_value[x][y]
-                    case 'bP':
-                        s -= pawn_value[x][y]
-                    case 'wN':
-                        s += knight_value[x][y]
-                    case 'bN':
-                        s -= knight_value[x][y]
-                    case 'wB':
-                        s += bishop_value[x][y]
-                    case 'bB':
-                        s -= bishop_value[x][y]
-                    case _:
-                        s += piece_values[board[x][y]]
-        return s
-    else:
-        m = all_moves(board, white_turn=white_turn)
-
-        m2 = []
-
-        for move in m:
-            board1 = [[i for i in line] for line in board]
-            board1[move[2]][move[3]] = board1[move[0]][move[1]]
-            board1[move[0]][move[1]] = ''
-
-            board1 = tuple([tuple(line) for line in board1])
-
-            m2.append(evaluation(board1, r=r - 1, white_turn=not white_turn))
-
-        if not white_turn:
-            return min(m2)
-        else:
-            return max(m2)
+def f(board, r, white_turn, move, i, evalueation_list):
+    evalueation_list[i] = (evaluation(board, r=r, white_turn=white_turn), move)
 
 
 def make_move(board):  # makes random move for black
     m = all_moves(board, False)
 
-    m2 = []
+    m2 = [None] * len(m)
+    threads = []
 
-    for move in m:
+    for i, move in enumerate(m):
         board1 = deepcopy(board)
         board1[move[2]][move[3]] = board1[move[0]][move[1]]
         board1[move[0]][move[1]] = ''
 
         board1 = tuple([tuple(line) for line in board1])
 
-        m2.append([evaluation(board1, r=recursion_depth, white_turn=True), move])
+        threads.append(threading.Thread(target=f(board1, recursion_depth, True, move, i, m2)))
+        threads[-1].start()
+
+    for t in threads:
+        t.join()
 
     m2.sort()
     for i in m2[:5]:
@@ -130,6 +69,7 @@ selected = None  # selected square of the board
 move_hints = None
 white_turn = True
 running = True
+time_for_move = None
 
 font = pygame.font.Font(None, 24)
 
@@ -150,7 +90,9 @@ while running:
                     board[new[1]][new[0]] = board[selected[1]][selected[0]]
                     board[selected[1]][selected[0]] = ''
                     # white_turn = not white_turn
+                    t = perf_counter()
                     make_move(board)
+                    time_for_move = perf_counter() - t
                     selected = None
                 else:
                     selected = new
@@ -216,11 +158,10 @@ while running:
     board1 = tuple([tuple(line) for line in board])
     e = evaluation(board1)
     text = font.render(f"Evaluation:{'+' if e > 0 else ''}{round(e, 3)}", True, text_color)
+    screen.blit(text, (800, 100))
 
-    text_rect = text.get_rect()
-    text_rect.center = (800, 100)
-
-    screen.blit(text, text_rect)
+    text2 = font.render(f'time for move: {time_for_move}', True, text_color)
+    screen.blit(text2, (800, 150))
 
     pygame.display.flip()
 
