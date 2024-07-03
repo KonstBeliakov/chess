@@ -17,34 +17,13 @@ def f(board, r, white_turn, move, i, evalueation_list):
     evalueation_list[i] = (evaluation(board, r=r, white_turn=white_turn), move)
 
 
-def make_move(board):  # makes random move for black
-    m = all_moves(board, False)
-
-    m2 = [None] * len(m)
-    threads = []
-
-    for i, move in enumerate(m):
-        board1 = deepcopy(board)
-        board1[move[2]][move[3]] = board1[move[0]][move[1]]
-        board1[move[0]][move[1]] = ''
-
-        board1 = tuple([tuple(line) for line in board1])
-
-        threads.append(threading.Thread(target=f(board1, recursion_depth, True, move, i, m2)))
-        threads[-1].start()
-
-    for t in threads:
-        t.join()
-
-    m2.sort()
-    for i in m2[:5]:
-        print(i[0], board[i[1][0]][i[1][1]], to_notation(*i[1][:2]), to_notation(*i[1][2:]))
-    print()
-
-    move = min(m2, key=lambda x: x[0])[1]
+def make_move(board):
+    e, move = evaluation(board, r=recursion_depth, white_turn=False)
 
     board[move[2]][move[3]] = board[move[0]][move[1]]
     board[move[0]][move[1]] = ''
+
+    return e
 
 
 board = [
@@ -70,7 +49,7 @@ move_hints = None
 white_turn = True
 running = True
 time_for_move = None
-
+current_evaluation = 0
 font = pygame.font.Font(None, 24)
 
 while running:
@@ -91,7 +70,7 @@ while running:
                     board[selected[1]][selected[0]] = ''
                     # white_turn = not white_turn
                     t = perf_counter()
-                    make_move(board)
+                    current_evaluation = make_move(board)
                     time_for_move = perf_counter() - t
                     selected = None
                 else:
@@ -156,8 +135,7 @@ while running:
         screen.blit(text, (indentX + i * square_size + square_size // 2, 10 + indentY + 8 * square_size))
 
     board1 = tuple([tuple(line) for line in board])
-    e = evaluation(board1)
-    text = font.render(f"Evaluation:{'+' if e > 0 else ''}{round(e, 3)}", True, text_color)
+    text = font.render(f"Evaluation:{'+' if current_evaluation > 0 else ''}{round(current_evaluation, 3)}", True, text_color)
     screen.blit(text, (800, 100))
 
     text2 = font.render(f'time for move: {time_for_move}', True, text_color)

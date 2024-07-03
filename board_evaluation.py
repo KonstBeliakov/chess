@@ -1,5 +1,7 @@
 from functools import lru_cache
 from chess_pieces_moves import all_moves
+from settings import *
+
 
 knight_value = [[2.5, 2.7, 2.8, 2.8, 2.8, 2.8, 2.7, 2.5],
                 [2.7, 2.8, 2.9, 2.9, 2.9, 2.9, 2.8, 2.7],
@@ -55,7 +57,7 @@ def evaluation_no_recursion(board: tuple):
                     s -= bishop_value[x][y]
                 case _:
                     s += piece_values[board[x][y]]
-    return s
+    return s, None
 
 
 def evaluation(board: tuple, r=0, white_turn=False, current_max=-300, current_min=300):
@@ -69,6 +71,8 @@ def evaluation(board: tuple, r=0, white_turn=False, current_max=-300, current_mi
         else:
             value = -300
 
+        right_move = None
+
         for move in m:
             board1 = [[i for i in line] for line in board]
             board1[move[2]][move[3]] = board1[move[0]][move[1]]
@@ -77,14 +81,18 @@ def evaluation(board: tuple, r=0, white_turn=False, current_max=-300, current_mi
             board1 = tuple([tuple(line) for line in board1])
 
             if not white_turn:
-                t = evaluation(board1, r=r - 1, white_turn=not white_turn, current_min=value)
-                value = min(value, t)
+                t = evaluation(board1, r=r - 1, white_turn=not white_turn, current_min=value)[0]
+                if t < value:
+                    value = t
+                    right_move = move
                 if value < current_max:
-                    return value
+                    return value, right_move
             else:
-                t = evaluation(board1, r=r - 1, white_turn=not white_turn, current_max=value)
-                value = max(value, t)
+                t = evaluation(board1, r=r - 1, white_turn=not white_turn, current_max=value)[0]
+                if t > value:
+                    value = t
+                    right_move = move
                 if value > current_min:
-                    return value
+                    return value, right_move
 
-        return value
+        return value, right_move
