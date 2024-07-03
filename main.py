@@ -4,7 +4,6 @@ from time import perf_counter
 
 from board_evaluation import evaluation
 from chess_pieces_moves import *
-from copy import deepcopy
 from settings import *
 import pygame
 
@@ -17,13 +16,18 @@ def f(board, r, white_turn, move, i, evalueation_list):
     evalueation_list[i] = (evaluation(board, r=r, white_turn=white_turn), move)
 
 
-def make_move(board):
-    e, move = evaluation(board, r=recursion_depth, white_turn=False)
+def make_move():
+    global current_evaluation, last_move, board, time_for_move, white_turn, can_move
+    t = perf_counter()
+    current_evaluation, last_move = evaluation(board, r=recursion_depth, white_turn=False)
 
-    board[move[2]][move[3]] = board[move[0]][move[1]]
-    board[move[0]][move[1]] = ''
+    board[last_move[2]][last_move[3]] = board[last_move[0]][last_move[1]]
+    board[last_move[0]][last_move[1]] = ''
 
-    return e
+    time_for_move = perf_counter() - t
+    white_turn = True
+    can_move = True
+    return current_evaluation, last_move
 
 
 board = [
@@ -47,10 +51,13 @@ images = {name: pygame.image.load(f"textures/{name}") for name in os.listdir('te
 selected = None  # selected square of the board
 move_hints = None
 white_turn = True
+can_move = True
 running = True
 time_for_move = None
 current_evaluation = 0
 font = pygame.font.Font(None, 24)
+
+last_move = None
 
 while running:
     for event in pygame.event.get():
@@ -64,14 +71,16 @@ while running:
                 selected = None
             elif selected and new[0] == selected[0] and new[1] == selected[1]:
                 selected = None
-            elif selected and board[selected[1]][selected[0]]:
+            elif selected and board[selected[1]][selected[0]] and can_move:
                 if move_hints and (new[1], new[0]) in move_hints:
                     board[new[1]][new[0]] = board[selected[1]][selected[0]]
                     board[selected[1]][selected[0]] = ''
-                    # white_turn = not white_turn
-                    t = perf_counter()
-                    current_evaluation = make_move(board)
-                    time_for_move = perf_counter() - t
+                    white_turn = False
+                    can_move = False
+                    last_move = [selected[1], selected[0], new[1], new[0]]
+                    bot_thread = threading.Thread(target=make_move)
+                    bot_thread.start()
+
                     selected = None
                 else:
                     selected = new
@@ -104,6 +113,17 @@ while running:
                                          indentY + square_size // 20 + square_size * selected[1],
                                          square_size * 0.9, square_size * 0.9))
 
+    # displaying last move
+    if last_move is not None:
+        for x, y in [last_move[:2], last_move[2:]]:
+            if (x + y) % 2:
+                color = last_move_black_color
+            else:
+                color = last_move_white_color
+
+            pygame.draw.rect(screen, color, (indentX + y * square_size, indentY + x * square_size,
+                                             square_size, square_size))
+
     # display pieces
     for x in range(8):
         for y in range(8):
@@ -111,7 +131,7 @@ while running:
                 screen.blit(images[f'{board[x][y]}.png'], (indentX + y * square_size, indentY + x * square_size))
 
     # display move hints
-    if selected and \
+    if selected and can_move and \
             ((white_turn and board[selected[1]][selected[0]].startswith('w')) or
              (not white_turn and board[selected[1]][selected[0]].startswith('b'))):
         move_hints = [tuple(move) for move in moves(board, selected[1], selected[0])]

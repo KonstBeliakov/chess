@@ -11,5 +11,7 @@ black_square_color = (50, 50, 50)
 white_square_color = (200, 200, 200)
 move_hint_color = (100, 255, 100)
 text_color = (200, 200, 200)
+last_move_black_color = (80, 80, 50)
+last_move_white_color = (230, 230, 200)
 
 show_move_hints = True
