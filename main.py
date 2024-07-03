@@ -12,6 +12,16 @@ def to_notation(x, y):
     return f'{"abcdefgh"[y]}{8 - x}'
 
 
+def play_move_sound():
+    pygame.mixer.music.load('sounds/move.mp3')
+    pygame.mixer.music.play(0)
+
+
+def play_capture_sound():
+    pygame.mixer.music.load('sounds/capture.mp3')
+    pygame.mixer.music.play(0)
+
+
 def f(board, r, white_turn, move, i, evalueation_list):
     evalueation_list[i] = (evaluation(board, r=r, white_turn=white_turn), move)
 
@@ -20,6 +30,11 @@ def make_move():
     global current_evaluation, last_move, board, time_for_move, white_turn, can_move
     t = perf_counter()
     current_evaluation, last_move = evaluation(board, r=recursion_depth, white_turn=False)
+
+    if board[last_move[2]][last_move[3]]:
+        play_capture_sound()
+    else:
+        play_move_sound()
 
     board[last_move[2]][last_move[3]] = board[last_move[0]][last_move[1]]
     board[last_move[0]][last_move[1]] = ''
@@ -59,6 +74,7 @@ font = pygame.font.Font(None, 24)
 
 last_move = None
 
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -73,8 +89,14 @@ while running:
                 selected = None
             elif selected and board[selected[1]][selected[0]] and can_move:
                 if move_hints and (new[1], new[0]) in move_hints:
+                    if board[new[1]][new[0]]:
+                        play_capture_sound()
+                    else:
+                        play_move_sound()
+
                     board[new[1]][new[0]] = board[selected[1]][selected[0]]
                     board[selected[1]][selected[0]] = ''
+
                     white_turn = False
                     can_move = False
                     last_move = [selected[1], selected[0], new[1], new[0]]
