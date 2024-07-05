@@ -1,10 +1,11 @@
 recursion_depth = 4
 
-screen_size = (1200, 700)
+screen_size = (1200, 800)
 
 square_size = 70
 indentX = 50
-indentY = 50
+indentY = 70
+captured_pieces_size = 25
 
 bg_color = (0, 0, 0)
 black_square_color = (50, 50, 50)

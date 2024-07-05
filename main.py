@@ -24,11 +24,13 @@ def play_capture_sound():
 
 
 def make_move():
-    global current_evaluation, last_move, board, time_for_move, white_turn, can_move
+    global current_evaluation, last_move, board, time_for_move, white_turn, can_move, captured_white, captured_black
     t = perf_counter()
     current_evaluation, last_move = evaluation(board, r=recursion_depth, white_turn=False)
 
     if board[last_move[2]][last_move[3]]:
+        captured_white.append(board[last_move[2]][last_move[3]])
+        print(captured_white, captured_black)
         play_capture_sound()
     else:
         play_move_sound()
@@ -59,6 +61,7 @@ screen = pygame.display.set_mode(screen_size)
 pygame.display.set_caption("Chess")
 
 images = {name: pygame.image.load(f"textures/{name}") for name in os.listdir('textures')}
+small_image_versions = {image_name: pygame.transform.scale(images[image_name], (captured_pieces_size, captured_pieces_size)) for image_name in images}
 
 selected = None  # selected square of the board
 move_hints = None
@@ -70,6 +73,8 @@ current_evaluation = 0
 font = pygame.font.Font(None, 24)
 
 last_move = None
+captured_white = []
+captured_black = []
 
 while running:
     for event in pygame.event.get():
@@ -86,6 +91,7 @@ while running:
             elif selected and board[selected[1]][selected[0]] and can_move:
                 if move_hints and (new[1], new[0]) in move_hints:
                     if board[new[1]][new[0]]:
+                        captured_black.append(board[new[1]][new[0]])
                         play_capture_sound()
                     else:
                         play_move_sound()
@@ -161,6 +167,23 @@ while running:
         for y in range(8):
             if board[x][y]:
                 screen.blit(images[f'{board[x][y]}.png'], (indentX + y * square_size, indentY + x * square_size))
+
+    # display captured pieces
+    pygame.draw.rect(screen, black_square_color,
+                     (indentX, indentY - captured_pieces_size - 15, square_size * 8, captured_pieces_size + 10))
+    text = font.render('Black captured:', True, text_color)
+    screen.blit(text, (indentX + 2 * square_size - 140, indentY - captured_pieces_size - 10))
+    for i, piece in enumerate(captured_white):
+        img = small_image_versions[f'{piece}.png']
+        screen.blit(img, (indentX + 2 * square_size + i * captured_pieces_size, indentY - captured_pieces_size - 15))
+
+    pygame.draw.rect(screen, black_square_color,
+                     (indentX, indentY + captured_pieces_size + 5 + square_size * 8, square_size * 8, captured_pieces_size + 10))
+    text = font.render('White captured:', True, text_color)
+    screen.blit(text, (indentX + 2 * square_size - 140, indentY + square_size * 8 + captured_pieces_size + 10))
+    for i, piece in enumerate(captured_black):
+        img = small_image_versions[f'{piece}.png']
+        screen.blit(img, (indentX + 2 * square_size + i * captured_pieces_size, indentY + captured_pieces_size + 5 + square_size * 8))
 
     # display move hints
     if selected and can_move and \
