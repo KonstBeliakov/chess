@@ -25,7 +25,7 @@ def play_capture_sound():
 
 def make_move():
     global current_evaluation, last_move, board, time_for_move, white_turn, can_move, captured_white, captured_black
-    t = perf_counter()
+    global black_time, white_move_start_time
     current_evaluation, last_move = evaluation(board, r=recursion_depth, white_turn=False)
 
     if board[last_move[2]][last_move[3]]:
@@ -38,7 +38,9 @@ def make_move():
     board[last_move[2]][last_move[3]] = board[last_move[0]][last_move[1]]
     board[last_move[0]][last_move[1]] = ''
 
-    time_for_move = perf_counter() - t
+    time_for_move = perf_counter() - black_move_start_time
+    black_time -= time_for_move
+    white_move_start_time = perf_counter()
     white_turn = True
     can_move = True
     return current_evaluation, last_move
@@ -72,6 +74,12 @@ time_for_move = None
 current_evaluation = 0
 font = pygame.font.Font(None, 24)
 
+white_time = 10 * 60
+black_time = 10 * 60
+
+white_move_start_time = perf_counter()
+black_move_start_time = None
+
 last_move = None
 captured_white = []
 captured_black = []
@@ -101,6 +109,10 @@ while running:
 
                     white_turn = False
                     can_move = False
+
+                    white_time -= perf_counter() - white_move_start_time
+
+                    black_move_start_time = perf_counter()
                     last_move = [selected[1], selected[0], new[1], new[0]]
                     bot_thread = threading.Thread(target=make_move)
                     bot_thread.start()
@@ -177,6 +189,16 @@ while running:
         img = small_image_versions[f'{piece}.png']
         screen.blit(img, (indentX + 2 * square_size + i * captured_pieces_size, indentY - captured_pieces_size - 15))
 
+    if not white_turn:
+        black_time2 = black_time - (perf_counter() - black_move_start_time)
+    else:
+        black_time2 = black_time
+
+    m = int(black_time2 // 60)
+    s = int(black_time2 % 60)
+    time_text = font.render(f'Time: {m}:{str(s).rjust(2, "0")}', True, text_color)
+    screen.blit(time_text, (indentX + 8 * square_size - 100, indentY - captured_pieces_size - 10))
+
     pygame.draw.rect(screen, black_square_color,
                      (indentX, indentY + captured_pieces_size + 5 + square_size * 8, square_size * 8, captured_pieces_size + 10))
     text = font.render('White captured:', True, text_color)
@@ -184,6 +206,16 @@ while running:
     for i, piece in enumerate(captured_black):
         img = small_image_versions[f'{piece}.png']
         screen.blit(img, (indentX + 2 * square_size + i * captured_pieces_size, indentY + captured_pieces_size + 5 + square_size * 8))
+
+    if white_turn:
+        white_time2 = white_time - (perf_counter() - white_move_start_time)
+    else:
+        white_time2 = white_time
+
+    m = int(white_time2 // 60)
+    s = int(white_time2 % 60)
+    text = font.render(f'Time: {m}:{str(s).rjust(2, "0")}', True, text_color)
+    screen.blit(text, (indentX + 8 * square_size - 100, indentY + square_size * 8 + captured_pieces_size + 10))
 
     # display move hints
     if selected and can_move and \
