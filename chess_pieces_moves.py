@@ -170,9 +170,45 @@ def is_in_check(board, white_turn=False):
 def all_moves(board, white_turn=True, consider_check=False):
     m = []
 
+    if white_turn and white_can_castle(board):
+        m.append('wO-O')
+    if not white_turn and black_can_castle(board):
+        m.append('bO-O')
+
     for x in range(8):
         for y in range(8):
             if (board[x][y].startswith('w') and white_turn) or \
                     (board[x][y].startswith('b') and not white_turn):
                 m += [[x, y, move[0], move[1]] for move in moves(board, x, y)]
     return m
+
+
+def white_can_castle(board):
+    return board[7][4] == 'wK' and not board[7][5] and not board[7][6] and board[7][7] == 'wR' and \
+        not is_in_check(white_turn=False, board=board)
+
+
+def black_can_castle(board):
+    return board[0][4] == 'bK' and not board[0][5] and not board[0][6] and board[0][7] == 'wR' and \
+        not is_in_check(white_turn=True, board=board)
+
+
+def make_move_on_board(move, board):
+    if move == 'bO-O':
+        board[0][4] = ''
+        board[0][5] = 'bR'
+        board[0][6] = 'bK'
+        board[0][7] = ''
+    elif move == 'wO-O':
+        board[7][4] = ''
+        board[7][5] = 'wR'
+        board[7][6] = 'wK'
+        board[7][7] = ''
+    elif move[0] == 7 and move[1] == 4 and board[move[0]][move[1]] == 'wK' and move[2] == 7 and move[3] == 6:
+        board[7][4] = ''
+        board[7][5] = 'wR'
+        board[7][6] = 'wK'
+        board[7][7] = ''
+    else:
+        board[move[2]][move[3]] = board[move[0]][move[1]]
+        board[move[0]][move[1]] = ''

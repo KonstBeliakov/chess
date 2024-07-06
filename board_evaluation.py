@@ -1,6 +1,5 @@
 from functools import lru_cache
-from chess_pieces_moves import all_moves
-from settings import *
+from chess_pieces_moves import *
 
 
 knight_value = [[2.5, 2.7, 2.8, 2.8, 2.8, 2.8, 2.7, 2.5],
@@ -75,9 +74,7 @@ def evaluation(board: tuple, r=0, white_turn=False, current_max=-300, current_mi
 
         for move in m:
             board1 = [[i for i in line] for line in board]
-            board1[move[2]][move[3]] = board1[move[0]][move[1]]
-            board1[move[0]][move[1]] = ''
-
+            make_move_on_board(move, board1)
             board1 = tuple([tuple(line) for line in board1])
 
             if not white_turn:

@@ -3,6 +3,7 @@ from copy import deepcopy
 from os import listdir
 from time import perf_counter
 
+from settings import *
 from board_evaluation import *
 from chess_pieces_moves import *
 from utils import *
@@ -172,6 +173,9 @@ class Board:
 
                 if can_sacrifice_king or not bool(is_in_check(board1, white_turn=not self.white_turn)):
                     self.move_hints.append(tuple(move))
+
+            if self.white_turn and white_can_castle(self.board) and self.board[self.selected[1]][self.selected[0]] == 'wK':
+                self.move_hints.append((7, 6))
         else:
             self.move_hints = None
 
@@ -201,43 +205,43 @@ class Board:
         elif self.selected and new[0] == self.selected[0] and new[1] == self.selected[1]:
             self.selected = None
         elif self.selected and self.board[self.selected[1]][self.selected[0]] and self.can_move:
-            if self.move_hints and (new[1], new[0]) in self.move_hints:
+            if not self.move_hints or (new[1], new[0]) not in self.move_hints:
+                self.selected = new
+            else:
                 if self.board[new[1]][new[0]]:
                     self.captured_black.append(self.board[new[1]][new[0]])
                     play_capture_sound()
                 else:
                     play_move_sound()
 
-                self.board[new[1]][new[0]] = self.board[self.selected[1]][self.selected[0]]
-                self.board[self.selected[1]][self.selected[0]] = ''
+                make_move_on_board((self.selected[1], self.selected[0], new[1], new[0]), self.board)
 
                 self.white_turn = False
                 self.can_move = False
 
                 self.white_time -= perf_counter() - self.white_move_start_time
-
                 self.black_move_start_time = perf_counter()
+
                 self.last_move = [self.selected[1], self.selected[0], new[1], new[0]]
                 bot_thread = threading.Thread(target=self.make_move)
                 bot_thread.start()
 
                 self.selected = None
-            else:
-                self.selected = new
         else:
             self.selected = new
 
     def make_move(self):
         self.current_evaluation, self.last_move = evaluation(self.board, r=recursion_depth, white_turn=False)
 
-        if self.board[self.last_move[2]][self.last_move[3]]:
+        make_move_on_board(self.last_move, self.board)
+
+        if self.last_move in ['wO-O', 'bO-O']:
+            play_move_sound()
+        elif self.board[self.last_move[2]][self.last_move[3]]:
             self.captured_white.append(self.board[self.last_move[2]][self.last_move[3]])
             play_capture_sound()
         else:
             play_move_sound()
-
-        self.board[self.last_move[2]][self.last_move[3]] = self.board[self.last_move[0]][self.last_move[1]]
-        self.board[self.last_move[0]][self.last_move[1]] = ''
 
         self.time_for_move = perf_counter() - self.black_move_start_time
         self.black_time -= self.time_for_move
