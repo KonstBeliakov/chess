@@ -233,8 +233,6 @@ class Board:
     def make_move(self):
         self.current_evaluation, self.last_move = evaluation(self.board, r=recursion_depth, white_turn=False)
 
-        make_move_on_board(self.last_move, self.board)
-
         if self.last_move in ['wO-O', 'bO-O']:
             play_move_sound()
         elif self.board[self.last_move[2]][self.last_move[3]]:
@@ -242,6 +240,8 @@ class Board:
             play_capture_sound()
         else:
             play_move_sound()
+
+        make_move_on_board(self.last_move, self.board)
 
         self.time_for_move = perf_counter() - self.black_move_start_time
         self.black_time -= self.time_for_move
